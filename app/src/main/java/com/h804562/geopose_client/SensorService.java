@@ -11,9 +11,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
-import android.os.Message;
 import android.os.Process;
-import android.provider.ContactsContract;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
@@ -29,7 +27,7 @@ import java.util.Date;
 
 public class SensorService extends Service implements SensorEventListener {
 
-    private final String TAG = "com.h804562.geopose_client";
+    private final String TAG = "SENSOR_SERVICE";
 
     private static final long TIMEOUT = 50;
 
@@ -44,8 +42,6 @@ public class SensorService extends Service implements SensorEventListener {
     private long currentTime;
     private long previousTime;
     private long timer;
-
-    // Handler that receives messages from the thread
 
     @Override
     public void onSensorChanged(SensorEvent event) {
@@ -102,6 +98,18 @@ public class SensorService extends Service implements SensorEventListener {
         handlerThread.start();
         serviceLooper = handlerThread.getLooper();
         serviceHandler = new Handler(serviceLooper);
+        initRunningStat();
+
+//        serviceHandler.post(runningStat);
+        sensorManager = (SensorManager) this.getSystemService(Context.SENSOR_SERVICE);
+        rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
+        sensorManager.registerListener(this, rotationSensor, SensorManager.SENSOR_DELAY_UI, serviceHandler);
+
+        Toast.makeText(this, "on created", Toast.LENGTH_SHORT).show();
+
+    }
+
+    private void initRunningStat() {
         isRunning = true;
         if (runningStat == null) {
             runningStat = new RunningStat[4];
@@ -115,13 +123,6 @@ public class SensorService extends Service implements SensorEventListener {
             runningStat[2].clear();
             runningStat[3].clear();
         }
-//        serviceHandler.post(runningStat);
-        sensorManager = (SensorManager) this.getSystemService(Context.SENSOR_SERVICE);
-        rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
-        sensorManager.registerListener(this, rotationSensor, SensorManager.SENSOR_DELAY_UI, serviceHandler);
-
-        Toast.makeText(this, "on created", Toast.LENGTH_SHORT).show();
-
     }
 
     @Override
@@ -137,7 +138,7 @@ public class SensorService extends Service implements SensorEventListener {
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(TAG, "Service has started!");
         Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
-        return START_NOT_STICKY;
+        return START_STICKY;
     }
 
 
